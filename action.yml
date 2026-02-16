@@ -1,0 +1,99 @@
+name: 'build-moonforge-action'
+description: "Build moonforge images with kas"
+
+inputs:
+  kas_file:
+    description: 'Path to the image kas file'
+    required: true
+  dl_dir:
+    description: 'Path to the Yocto downloads directory'
+    required: true
+  sstate_dir:
+    description: 'Path to the Yocto shared-state cache directory'
+    required: true
+  image_id:
+    description: 'Image ID to be used in os-release'
+    required: true
+  image_version:
+    description: 'Image version to be used in os-release'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Clean previous builds
+      shell: bash
+      run: |
+        rm -rf ./env
+        rm -rf ./aux
+        rm -rf ./build
+
+    - name: Set up python dependencies
+      shell: bash
+      run: |
+        python3 -m venv env
+        . ./env/bin/activate
+        pip install -r "${GITHUB_ACTION_PATH}/requirements.txt"
+        echo "PATH=${PATH}" >> $GITHUB_ENV
+
+    - name: Set kas environment variables
+      shell: bash
+      run: |
+        DL_DIR="${{ inputs.dl_dir }}"
+        SSTATE_DIR="${{ inputs.sstate_dir }}"
+
+        if [ ! -d "${DL_DIR}" ]; then
+          echo "${DL_DIR} directory does not exist"
+          exit 1
+        fi
+
+        if [ ! -d "${SSTATE_DIR}" ]; then
+          echo "${SSTATE_DIR} directory does not exist"
+          exit 1
+        fi
+
+        echo "DL_DIR=${DL_DIR}" >> $GITHUB_ENV
+        echo "SSTATE_DIR=${SSTATE_DIR}" >> $GITHUB_ENV
+        echo "KAS_CONTAINER_ENGINE=docker" >> $GITHUB_ENV
+
+    - name: Set image environment variables
+      shell: bash
+      run: |
+          IMAGE_ID="${{ inputs.image_id }}"
+          IMAGE_VERSION="${{ inputs.image_version }}"
+
+          if [ -z "${IMAGE_ID}" ]; then
+            echo "IMAGE_ID is empty"
+            exit 1
+          fi
+
+          if [ -z "${IMAGE_VERSION}" ]; then
+            echo "IMAGE_VERSION is empty"
+            exit 1
+          fi
+
+          echo "IMAGE_ID=${IMAGE_ID}" >> $GITHUB_ENV
+          echo "IMAGE_VERSION=${IMAGE_VERSION}" >> $GITHUB_ENV
+
+    - name: Set up auxiliary kas fragments
+      shell: bash
+      run: |
+        mkdir -p ./aux
+        cp ${GITHUB_ACTION_PATH}/kas/fetch.yml ./aux/fetch.yml
+        cp ${GITHUB_ACTION_PATH}/kas/build.yml ./aux/build.yml
+
+    - name: Fetch Yocto sources
+      shell: bash
+      run: |
+        kas-container \
+          build \
+          "${{ inputs.kas_file }}:./aux/fetch.yml" \
+          -- --runonly=fetch
+
+    - name: Build Yocto target
+      shell: bash
+      run: |
+        kas-container \
+          --runtime-args "-e IMAGE_ID -e IMAGE_VERSION" \
+          build \
+          "${{ inputs.kas_file }}:./aux/build.yml"
