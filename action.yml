@@ -24,17 +24,8 @@ runs:
     - name: Clean previous builds
       shell: bash
       run: |
-        rm -rf ./env
         rm -rf ./aux
         rm -rf ./build
-
-    - name: Set up python dependencies
-      shell: bash
-      run: |
-        python3 -m venv env
-        . ./env/bin/activate
-        pip install -r "${GITHUB_ACTION_PATH}/requirements.txt"
-        echo "PATH=${PATH}" >> $GITHUB_ENV
 
     - name: Set kas environment variables
       shell: bash
@@ -85,7 +76,7 @@ runs:
     - name: Fetch Yocto sources
       shell: bash
       run: |
-        kas-container \
+        ${GITHUB_ACTION_PATH}/scripts/kas-container \
           build \
           "${{ inputs.kas_file }}:./aux/fetch.yml" \
           -- --runonly=fetch
@@ -93,7 +84,7 @@ runs:
     - name: Build Yocto target
       shell: bash
       run: |
-        kas-container \
+        ${GITHUB_ACTION_PATH}/scripts/kas-container \
           --runtime-args "-e IMAGE_ID -e IMAGE_VERSION" \
           build \
           "${{ inputs.kas_file }}:./aux/build.yml"
