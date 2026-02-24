@@ -20,6 +20,16 @@ jobs:
           image_version: ${{ github.run_id }}
 ```
 
+## Inputs
+
+| Input         | Description                                    | Mandatory | Default | Reference
+| ------------- | ---------------------------------------------- | --------- | ------- | ---------
+| kas_file      | Path to the image kas file                     | Yes       |         |
+| dl_dir        | Path to the Yocto downloads directory          | Yes       |         | See [Yocto documentation](https://docs.yoctoproject.org/5.0.15/ref-manual/variables.html#term-DL_DIR)
+| sstate_dir    | Path to the Yocto shared-state cache directory | Yes       |         | See [Yocto documentation](https://docs.yoctoproject.org/5.0.15/overview-manual/concepts.html#shared-state-cache)
+| image_id      | Image ID to be used in os-release              | Yes       |         | See [Freedesktop documentation](https://www.freedesktop.org/software/systemd/man/latest/os-release.html#IMAGE_ID=)
+| image_version | Image version to be used in os-release         | Yes       |         | See [Fredesktop documentation](https://www.freedesktop.org/software/systemd/man/latest/os-release.html#IMAGE_VERSION=)
+
 > [!IMPORTANT]
 > This action assumes that the *dl_dir* and *sstate_dir* directories are properly set up. Running this action on runners with no cached directories can result in unnecessary long and credit-consuming workflows.
 
