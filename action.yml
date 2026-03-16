@@ -28,11 +28,11 @@ runs:
         rm -rf ./build
 
     - name: Set kas environment variables
+      env:
+        DL_DIR: ${{ inputs.dl_dir }}
+        SSTATE_DIR: ${{ inputs.sstate_dir }}
       shell: bash
       run: |
-        DL_DIR="${{ inputs.dl_dir }}"
-        SSTATE_DIR="${{ inputs.sstate_dir }}"
-
         if [ ! -d "${DL_DIR}" ]; then
           echo "${DL_DIR} directory does not exist"
           exit 1
@@ -48,11 +48,11 @@ runs:
         echo "KAS_CONTAINER_ENGINE=docker" >> $GITHUB_ENV
 
     - name: Set image environment variables
+      env:
+        IMAGE_ID: ${{ inputs.image_id }}
+        IMAGE_VERSION: ${{ inputs.image_version }}
       shell: bash
       run: |
-          IMAGE_ID="${{ inputs.image_id }}"
-          IMAGE_VERSION="${{ inputs.image_version }}"
-
           if [ -z "${IMAGE_ID}" ]; then
             echo "IMAGE_ID is empty"
             exit 1
@@ -74,17 +74,21 @@ runs:
         cp ${GITHUB_ACTION_PATH}/kas/build.yml ./aux/build.yml
 
     - name: Fetch Yocto sources
+      env:
+        KAS_FILE: ${{ inputs.kas_file }}
       shell: bash
       run: |
         ${GITHUB_ACTION_PATH}/scripts/kas-container \
           build \
-          "${{ inputs.kas_file }}:./aux/fetch.yml" \
+          "${KAS_FILE}:./aux/fetch.yml" \
           -- --runonly=fetch
 
     - name: Build Yocto target
+      env:
+        KAS_FILE: ${{ inputs.kas_file }}
       shell: bash
       run: |
         ${GITHUB_ACTION_PATH}/scripts/kas-container \
           --runtime-args "-e IMAGE_ID -e IMAGE_VERSION" \
           build \
-          "${{ inputs.kas_file }}:./aux/build.yml"
+          "${KAS_FILE}:./aux/build.yml"
