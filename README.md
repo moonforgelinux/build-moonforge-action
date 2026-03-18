@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: self-hosted
     steps:
-      - uses: moonforgelinux/build-moonforge-action@v0.1.0
+      - uses: moonforgelinux/build-moonforge-action@v0.1.1
         with:
           kas_file: kas/image.yml
           dl_dir: /path/to/cached/downloads
